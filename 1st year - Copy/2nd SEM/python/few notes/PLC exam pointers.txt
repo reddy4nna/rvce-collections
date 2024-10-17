@@ -1,0 +1,12 @@
+5 total questions (10 marks each)
+each of these 5 will have subquestions 
+no choice in question
+unit-1 and unit2 is the syllabus for cie-1
+read the two ppt's sent + lab programmes (4)
+
+90min
+
+install python on windows/linux procedure 
+
+rules to declare variable may be asked for a mark or two
+string concatenaiton

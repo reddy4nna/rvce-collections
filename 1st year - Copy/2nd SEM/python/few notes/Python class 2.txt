@@ -1,0 +1,24 @@
+function
+
+Split function --> Converts strings into lists 
+length fucntion --> 
+list function --> Collection of elements (strings, integers ,etc)
+                   List is defined in []
+			 List is mutable 
+
+Dictionary ( is also mutable)
+Collection of key value pairs 
+                  key --> unique identifier value 
+
+if/else :
+
+  
+
+
+Question : Read a paragraph from a user and count the number of words and frequecy of the words appearing and search for a specific word 
+Answer :
+
+read the input from the user and print it 
+convert the input into a list 
+Find the length of the list and print it 
+
