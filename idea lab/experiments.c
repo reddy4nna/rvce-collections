@@ -1,0 +1,161 @@
+// ULTRASONIC SENSOR LED INTERFACE
+/*
+ultrasonic sensor: 
+vcc --> 5v
+echo --> pin 8
+trig --> pin 9
+gnd --> gnd
+
+led:
+small side --> gnd
+longer side --> pin 3
+*/
+
+int trigPin = 9;
+int echoPin = 8;
+int led_Pin = 3;
+int distance_threshold = 40;
+float duration_us, distance_cm;
+
+void setup(){
+    Serial.begin(9600);
+    pinMode(trigPin, OUTPUT);
+    pinMode(echoPin, INPUT);
+    pinMode(led_Pin, OUTPUT);
+}
+
+void loop(){
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+
+    duration_us = pulseIn(echoPin, HIGH);
+
+    distance_cm = 0.017 * duration_us;
+    if(distance_cm <distance_threshold)
+    digitalWrite(led_Pin, HIGH);
+    else digitalWrite(led_Pin, LOW);
+
+    Serial.print("distance: ");
+    Serial.print(distance_cm);
+    Serial.println(" cm");
+    delay(500);
+}
+
+//TEMPERACTURE AND HUMIDITY SENSOR WITH LED
+/*
+display board:
+scl --> a5
+sda --> a4
+vcc --> 5v
+gnd --> gnd
+
+senor (chex borad):
+vcc --> 3v
+middle pin--> 2
+gnd --> gnd
+*/
+
+#include "DHT.h"
+#include<LiquidCrytal_I2C.h>
+LiquidCrytal_I2C lcd(0x27,16,2);
+#define DHTPIN 2
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup(){}
+
+void loop(){
+    float humi=dht.readHumidity(0);
+    float tempC=dht.readTemperature();
+    Serial.print("humidity: ");
+    Serial.print(humi);
+    Serial.print("%");
+    Serial.print("      |   ")
+    Serial.print("temperature")
+    Serial.print(tempC);
+    Serial.print("      .C  ");
+
+    lcd.init();
+    lcd.backlight();
+    lcd.setCursor(0,0);
+    lcd.print("humi:    ");
+    lcd.print(humi);
+    lcd.print("%");
+    Serial.begin(9600);
+    dht.begin();
+    lcd.setCursor(0,1);
+    lcd.print("Temp:    ");
+    lcd.print(tempC);
+    lcd.print("     .C  ");
+    delay(500);
+}
+
+//FLAME SENSOR
+
+/*
+flame sensor(one led type bulb):
+vcc --> 5v
+gnd --> gnd
+flame pin --> 2
+
+buzzer:
+gnd --> gnd
+other --> 13
+*/
+
+int Buzzer = 13;
+int FlamePin = 2;
+int Flame = HIGH;
+
+void setup(){
+    pinMode(Buzzer, OUTPUT);
+    pinMode(FlamePin, INPUT);
+    Serial.begin(9600);
+}
+
+void loop(){
+    Flame = digitalRead(FlamePin);
+    if (Flame == HIGH){
+        Serial.println("HIGH FLAME");
+        digitalWrite(Buzzer, HIGH);
+    }
+    else{
+        Serial.println("NO FLAME");
+        digitalWrite(Buzzer, LOW);
+    }
+}
+
+//WATER LEVEL SENSOR
+/*
+water pump:
+gnd --> gnd
+other --> 2
+
+led:
+gnd --> gnd
+other --> 13 (longer)
+*/
+
+int FloatSensor = 2;
+int led=13;
+int buttonState = 1;
+
+void setup(){
+    Serial.begin(9600);
+    pinMode(FloatSensor, INPUT_PULLUP);
+    pinMode(led, OUTPUT);
+}
+
+void loop(){
+    buttonState=digitalRead(FloatSensor);
+    if (buttonState==HIGH){
+        digitalWrite(led, LOW);
+        Serial.println("WATERLEVEL - HIGH");
+    }
+    else{
+        digitalWrite(led, HIGH);
+        Serial.println("WATERLEVEL - LOW");
+    }
+    delay(1000);
+}
