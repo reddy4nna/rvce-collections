@@ -169,21 +169,21 @@
 
 //structure distance
 
-#include <stdio.h>
-#include <math.h>
+// #include <stdio.h>
+// #include <math.h>
 
-struct point{
-    float x,y;
-};
+// struct point{
+//     float x,y;
+// };
 
-int main(void){
-    struct point point1,point2;
-    printf("enter the x and y coordinates of point1: ");
-    scanf("%f %f",&point1.x,&point1.y);
-    printf("enter the x and y coordinates of point2: ");
-    scanf("%f %f",&point2.x,&point2.y);
+// int main(void){
+//     struct point point1,point2;
+//     printf("enter the x and y coordinates of point1: ");
+//     scanf("%f %f",&point1.x,&point1.y);
+//     printf("enter the x and y coordinates of point2: ");
+//     scanf("%f %f",&point2.x,&point2.y);
 
-    printf("distance: %.2f\n",sqrt(pow(point2.x-point1.x,2) + pow(point2.y - point1.y,2)));
+//     printf("distance: %.2f\n",sqrt(pow(point2.x-point1.x,2) + pow(point2.y - point1.y,2)));
     
-    return 0;
-}
+//     return 0;
+// }
