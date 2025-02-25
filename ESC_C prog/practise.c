@@ -29,7 +29,6 @@
 
 // recurssive functions
 
-
 //5 = 5 x 4 x 3 x 2 x 1
 
 // #include <stdio.h>
@@ -187,3 +186,30 @@
     
 //     return 0;
 // }
+
+#include <stdio.h>
+#include <string.h>
+
+int main(void){
+    char name[5],temp[50];
+    int i,j;
+
+    printf("enter names:");
+    for (i=0;i<5;i++){
+        scanf("%s",name[i]);
+    }
+    for(i=0;i<5;i++){
+        for(j=0;j<5-i-1;j++){
+            if (strcmp(name[j],name[i])>0){
+                temp=name[j];
+                name[j]=name[i];
+                name[i]=temp;
+            }
+        }
+    } 
+    printf("sorted:");
+    for(i=0;i<5;i++){
+        printf("%s\n",name[i]);
+    }   
+    return 0;
+}
