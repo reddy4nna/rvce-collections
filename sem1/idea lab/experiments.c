@@ -81,12 +81,12 @@ void loop(){
     Serial.print(tempC);
     Serial.print("      .C  ");
 
+    lcd.clear(); //if overlapping occurs
     lcd.setCursor(0,0);
     lcd.print("humi:    ");
     lcd.print(humi);
     lcd.print("%");
     
-    lcd.clear() //if overlapping occurs
     lcd.setCursor(0,1);
     lcd.print("Temp:    ");
     lcd.print(tempC);
@@ -261,7 +261,7 @@ int led_pin =3;
 
 void setup(){
     Serial.begin(9600);
-    pinMode(door_sensor, INPUT);
+    pinMode(door_sensor, INPUT_PULLUP);
     pinMode(led_pin,OUTPUT);
 }
 

@@ -78,29 +78,29 @@
 //selection sort
 // 7,6,5,1,2,3
 
-#include <stdio.h>
-#define n 6
+// #include <stdio.h>
+// #define n 6
 
-int main(void){
-    int i,j;
-    int arr[]={7,6,5,1,2,3};
-    for(i=0;i<n;i++){
-        int small=i;
-        for(j=i;j<n;j++){
-            if(arr[small]>arr[j]){
-                small = j;
-            }
-        }
-        int temp;
-        temp = arr[i];
-        arr[i]=arr[small];
-        arr[small]=temp;   
-    }
-    for(i=0;i<n;i++){
-        printf("%d ",arr[i]);
-    }
-    return 0;
-}
+// int main(void){
+//     int i,j;
+//     int arr[]={7,6,5,1,2,3};
+//     for(i=0;i<n;i++){
+//         int small=i;
+//         for(j=i;j<n;j++){
+//             if(arr[small]>arr[j]){
+//                 small = j;
+//             }
+//         }
+//         int temp;
+//         temp = arr[i];
+//         arr[i]=arr[small];
+//         arr[small]=temp;   
+//     }
+//     for(i=0;i<n;i++){
+//         printf("%d ",arr[i]);
+//     }
+//     return 0;
+// }
 
 //bubble sort
 
@@ -126,4 +126,39 @@ int main(void){
 // }
 
 
+// #include <stdio.h>
+// int fact(int n){
+//     if (n==0)
+//         return 1;
+//     else
+//         return (n * fact(n-1));
+// }
 
+// int main(void){
+//     int num = 5;
+//     int res;
+//     res = fact(num);
+//     printf("factorial: %d\n",res);
+// }
+
+
+
+#include <stdio.h>
+void fact(int n, int *result){
+    if (n==0){
+        *result = 1;
+        return;
+    }
+    else{
+        int temp_result;
+        fact(n-1,&temp_result);
+        *result = n * temp_result;
+    }
+}
+
+int main(void){
+    int num = 5;
+    int res;
+    fact(num,&res);
+    printf("factorial: %d\n",res);
+}
