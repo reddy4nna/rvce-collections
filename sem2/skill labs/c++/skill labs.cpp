@@ -85,29 +85,47 @@ using namespace std;
 //     return 0;
 // }
 
-#include <iostream>
-#include <vector>
-#include <cmath>
-using namespace std;
+// #include <iostream>
+// #include <vector>
+// #include <cmath>
+// using namespace std;
 
-int main() {
-    int num;
-    cout << "enter number: ";
-    cin >> num;
-    int original = num;
-    vector<int> digits;
-    while (num != 0) {
-        digits.push_back(num % 10);
-        num /= 10;
-    }
-    int n = digits.size();
-    int sum = 0;
-    for (int digit : digits) {
-        sum += pow(digit,n);
-    }
-    if (sum == original)
-        cout << "armstrong number." << endl;
-    else
-        cout << "not an armstrong number." << endl;
-    return 0;
+// int main() {
+//     int num;
+//     cout << "enter number: ";
+//     cin >> num;
+//     int original = num;
+//     vector<int> digits;
+//     while (num != 0) {
+//         digits.push_back(num % 10);
+//         num /= 10;
+//     }
+//     int n = digits.size();
+//     int sum = 0;
+//     for (int digit : digits) {
+//         sum += pow(digit,n);
+//     }
+//     if (sum == original)
+//         cout << "armstrong number." << endl;
+//     else
+//         cout << "not an armstrong number." << endl;
+//     return 0;
+// }
+
+#include <string>
+#include <algorithm>
+
+std::string reverseString(const std::string& input) {
+    std::string result = input;
+    std::reverse(result.begin(), result.end());
+    return result;
 }
+
+#include <vector>
+#include <algorithm>
+
+bool containsElement(const std::vector<int>& vec, int target) {
+    return std::find(vec.begin(), vec.end(), target) != vec.end();
+}
+
+
