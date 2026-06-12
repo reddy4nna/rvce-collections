@@ -1,0 +1,1057 @@
+mcp
+
+//1-4 save as .c file
+
+//1- transfer from rom to ram and exchange.
+	PRESERVE8
+Stack EQU 0x100
+	AREA STACK,NOINIT,READWRITE,ALIGN=4
+StackMem SPACE Stack
+
+	AREA RESET,DATA,READONLY
+	EXPORT VECTORS
+__Vectors
+	DCD StackMem
+	DCD Reset_Handler
+	
+	AREA tempData,DATA,READONLY,ALIGN=4
+ROMARRAY1 DCD  0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08
+ROMARRAY2 DCD  0x09 0x10 0x11 0x12 0x13 0x14 0x15 0x16
+
+	AREA |.data|,DATA,READWRITE,ALIGN=4
+LEN EQU 0x08
+ARRAY1 SPACE 32
+ARRAY2 SPACE 32
+
+	AREA |.text|,CODE,READONLY,ALIGN=4
+	ENTRY
+	EXPORT Reset_Handler
+Reset_Handler
+Reset_Handler_End
+
+	MOV R0,#0x10
+	LDR R1,=ROMARRAY2+28
+	LDR R2,=ARRAY2+28
+	
+MEMCPY_LOOP
+	LDR R3,[R1],#-4
+	STR R3,[R2],#-4
+	SUBS R0,R0,#1
+	BNE MEMCPY_LOOP
+	
+	MOV R0,#LEN
+	LDR R1,=ARRAY1+28
+	LDR R2,=ARRAY2+28
+	
+EXCH_LOOP
+	LDR R3,[R1]
+	LDR R4,[R2]
+	STR R3,[R2],#-4
+	STR R4,[R1],#-4
+	SUBS R0,R0,#1
+	BNE EXCH_LOOP
+STOP B STOP
+	END
+
+//1b- transfer from rom to ram and overlap exchange.
+	PRESERVE8
+Stack EQU 0X100
+	AREA STACK,NOINIT,READWRITE,ALIGN=4
+StackMem SPACE Stack
+
+	AREA RESET,DATA,READONLY
+	EXPORT__Vectors
+__Vectors
+	DCD StackMem
+	DCD Reset_Handler
+	
+	AREA tempData,DATA,READONLY,ALIGN=4
+ROMARRAY DCD 0X01 0X02 0X03 0X04 0X05 0X06 0X07 0X08
+
+	AREA |.data|,DATA,READWRITE,ALIGN=4
+LEN EQU 0X08
+NONOVERLAP EQU 0X08
+ARRAY SPACE 32
+
+	AREA |.text|,CODE,READONLY,ALIGN=4
+	ENTRY
+	EXPORT Reset_Handler
+Reset_Handler
+Reset_Handler_End
+
+	MOV R0,#0X08
+	LDR R1,=ROMARRAY+28
+	LDR R2,=ARRAY+28
+	
+MEMCPY_LOOP
+	LDR R3,[R1],#-4
+	STR R3,[R2],#-4
+	SUBS R0,R0,#1
+	BNE MEMCPY_LOOP
+	
+	MOV R0,#LEN
+	LDR R1,=ARRAY+28
+	LDR R2,=ARRAY+28+NONOVERLAP
+	
+EXCH_LOOP
+	LDR R3,[R1],#-4
+	STR R3,[R2],#-4
+	SUBS R0,R0,#1
+	BNE EXCH_LOOP
+STOP B STOP
+	END
+
+//2a- 32x32 arithmetic
+	PRESERVE8
+Stack EQU 0x100
+	AREA STACK,NOINIT,READWRITE,ALIGN=4
+StackMem SPACE Stack
+
+	AREA RESET,DATA,READONLY
+	EXPORT __Vectors
+__Vectors
+	DCD StackMem
+	DCD Reset_Handler
+	
+	AREA |.text|,CODE,READONLY,ALIGN=4
+	ENTRY
+	EXPORT Reset_Handler
+Reset_Handler
+Reset_Handler_End
+
+	LDR R1,=0X20000000
+	LDR R2,[R1]
+	LDR R3,[R1,#4]
+	LDR R4,[R1,#8]
+	
+	CMP R2,#1
+	BNE CHK_SUB
+	ADDS R7,R3,R4
+	B LAST
+	
+CHK_SUB CMP R2,#2
+	BNE CHK_MULL
+	SUBS R7,R3,R4
+	B LAST
+	
+CHK_MULL CMP R2,#3
+	BNE CHK_DIV
+	UMULL R7,R8,R3,R4
+	B LAST
+	
+CHK_DIV CMP R2,#4
+	BNE LAST
+	UDIV R7,R3,R4
+	
+LAST    STR R7,[R1,#20]
+		STR R8,[R1,#24]
+	
+STOP B STOP
+	END
+	
+	
+//2b- 64x64 arithemetic
+
+	PRESERVE8
+Stack EQU 0x100
+	AREA STACK,NOINIT,READWRITE,ALIGN=4
+StackMem SPACE Stack
+
+	AREA RESET,DATA,READONLY
+	EXPORT __Vectors
+__Vectors
+	DCD StackMem
+	DCD Reset_Handler
+	
+	AREA |.text|,CODE,READONLY,ALIGN=4
+	ENTRY
+	EXPORT Reset_Handler
+Reset_Handler
+Reset_Handler_End
+
+	LDR R1,=0X2000000
+	LDR R2,[R1]
+	LDR R3,[R1,#4]
+	LDR R4,[R1,#8]
+	LDR R5,[R1,#12]
+	LDR R6,[R1,#16]
+	
+	CMP R2,#1
+	BNE CHK_SUB
+	ADDS R7,R3,R5
+	ADC R8,R4,R6
+	B LAST
+	
+CHK_SUB CMP R2,#2
+	BNE CHK_MULL
+	SUBS R7,R3,R5
+	SBC R8,R4,R6
+	B LAST
+	
+CHK_MUL CMP R2, #3            
+    BNE DEFAULT 
+    UMULL R7, R8, R3, R5     
+    UMULL R9, R10, R3, R6    
+    UMULL R6, R3, R4, R6  
+    ADDS R8, R8, R9 
+    ADCS R9, R10, R6 
+    ADC R10, R3, #0 
+    UMULL R5, R3, R4, R5   
+    ADDS R8, R8, R5 
+    ADCS R9, R9, R3 
+    ADC R10, R10, #0       
+    B LAST
+	
+LAST    STR R7, [R1, #20]       
+		STR R8, [R1, #24]    
+		STR R9, [R1, #28]    
+		STR R10, [R1, #32]  
+ 
+STOP  B  STOP 
+     END
+
+
+//3a
+	PRESERVE8
+Stack EQU 0x100
+	AREA STACK,NOINIT,READWRITE,ALIGN=4
+StackMem SPACE Stack
+
+	AREA RESET,DATA,READONLY
+	EXPORT __Vectors
+__Vectors
+	DCD StackMem
+	DCD Reset_Handler
+	
+	AREA tempData,DATA,READONLY,ALIGN=4
+ARRAY DCD 1,2,3,4,55,6,7,8,9,10
+
+LEN EQU 0x10
+	AREA |.text|,CODE,READONLY,ALIGN=4
+	ENTRY
+	EXPORT Reset_Handler
+Reset_Handler
+Reset_Handler_End
+
+	LDR R0,=ARRAY
+	MOV R1,#LEN
+	MOV R2,#55
+	BL Linear_Search
+
+STOP B STOP
+
+Linear_Search
+	EXPORT Linear_Search
+	MOV R4,R0
+	MOV R3,#0
+	MOV R1,#0
+	
+LOOP
+	ADD R3,R3,#1
+	LDR R5,[R4]
+	CMP R5,R2
+	ADDEQ R0,R0,R3
+	MOVEQ PC,LR
+	ADD R4,R4,#4
+	CMP R3,R1
+	BNE LOOP
+	MOV PC,LR
+	END
+	
+
+//3b
+	PRESERVE8
+Stack EQU 0x100
+	AREA STACK,NOINIT,READWRITE,ALIGN=4
+StackMem SPACE Stack
+
+	AREA RESET,DATA,READONLY
+	EXPORT __Vectors
+__Vectors
+	DCD StackMem
+	DCD Reset_Handler
+	
+	AREA tempData,DATA,READONLY,ALIGN=4
+ARRAY DCD 1,2,3,4,5,6,7,8,9,10
+
+LEN EQU 0x10
+	AREA |.text|,CODE,READONLY,ALIGN=4
+	ENTRY
+	EXPORT Reset_Handler
+Reset_Handler
+Reset_Handler_End
+
+	LDR R0,=ARRAY
+	MOV R1,#0
+	MOV R2,#9
+	MOV R3,#0x08
+	BL Binary_Search
+	
+STOP B STOP
+
+Binary_Search
+	MOV R4,R0
+	MOV R0,#0
+	
+LOOP
+	ADD R5,R1,R2
+	LSR R5,R5,#1
+	LSL R7,R5,#2
+	LDR R6,[R4,R7]
+	CMP R3,R6
+	ADDEQ R0,R0,R5
+	ADDEQ R0,R0,#1
+	MOVEQ PC,LR
+	SUBLT R5,R5,#1
+	MOVLT R2,R5
+	ADDGT R5,R5,#1
+	MOVGT R1,R5
+	CMP R1,R2
+	MOVEQ PC,LR
+	B Binary_Search
+	END
+
+
+
+//4a
+cubemx:
+stm32f407vg-disc1
+clear all pinout config
+RCC->HSE-crystal ceramic resonator
+SYS->serial wire
+
+pd15,14,13,12 - GPIO_output
+clk config default
+toolchain/ide- MDK-ARM
+
+options for target- debug
+1. st debugger to - v1.6 smthg
+2. check on reset and run box
+
+#include "main.h"
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+int main(void)
+{
+HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,GPIO_PIN_SET);
+HAL_Delay(1000);
+HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,GPIO_PIN_RESET);
+HAL_Delay(1000);
+}
+
+
+//4b
+
+7 seg display is common anode type
+
+connections:
+g  f com a b 
+10 9  8  7 6
+1  2  3  4 5
+e  d com c dp
+
+pa1 to pa7 : a to g
+vcc - 1k - com
+
+
+include "main.h"
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+int main(void)
+{
+	while(1)
+	{
+		//0
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5| GPIO_PIN_6, GPIO_PIN_RESET); 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, GPIO_PIN_SET); 
+		HAL_Delay(1000); 
+ 
+		//1
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_2|GPIO_PIN_3, GPIO_PIN_RESET); 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_SET); 
+		HAL_Delay(1000); 
+ 
+		//2
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_7|GPIO_PIN_5|GPIO_PIN_4, GPIO_PIN_RESET); 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_3|GPIO_PIN_6,GPIO_PIN_SET); 
+		HAL_Delay(1000); 
+    
+		//3
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_7|GPIO_PIN_3|GPIO_PIN_4, GPIO_PIN_RESET); 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5|GPIO_PIN_6, GPIO_PIN_SET); 
+		HAL_Delay(1000); 
+   
+		//4
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_6|GPIO_PIN_2|GPIO_PIN_7|GPIO_PIN_3,GPIO_PIN_RESET); 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5,GPIO_PIN_SET); 
+		HAL_Delay(1000); 
+		
+		//5
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_6|GPIO_PIN_1|GPIO_PIN_7|GPIO_PIN_3|GPIO_PIN_4 ,GPIO_PIN_RESET); 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_2|GPIO_PIN_5, GPIO_PIN_SET); 
+		HAL_Delay(1000); 
+		
+		//6 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_6|GPIO_PIN_1|GPIO_PIN_7|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5,GPIO_PIN_RESET); 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_2 , GPIO_PIN_SET); 
+		HAL_Delay(1000); 
+  
+		//7 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3 ,GPIO_PIN_RESET); 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_4 , GPIO_PIN_SET); 
+		HAL_Delay(1000); 
+ 
+		//8 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,GPIO_PIN_RESET); 
+		HAL_Delay(1000);          
+   
+		//9 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_7|GPIO_PIN_6,GPIO_PIN_RESET); 
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5  , GPIO_PIN_SET); 
+		HAL_Delay(1000); 
+	}
+}
+
+
+//4c
+in config- set pa0 as GPIO_Input
+(no extra connections. pa0 to push button internally configured)
+
+include "main.h"
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+int main(void)
+{
+	HAL_Init();
+	SystemClock_Config();
+	MX_GPIO_Init();
+	while(1)
+	{
+		if(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)==GPIO_PIN_SET)
+		{
+			HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,GPIO_PIN_SET)
+			HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,GPIO_PIN_RESET)
+			HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,GPIO_PIN_SET)
+			HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,GPIO_PIN_RESET)
+			HAL_Delay(1000);
+		}
+		else
+		{
+			HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,GPIO_PIN_SET)
+			HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,GPIO_PIN_RESET)
+			HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,GPIO_PIN_SET)
+			HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,GPIO_PIN_RESET)
+			HAL_Delay(1000);
+		}
+	}
+}
+
+
+
+//5a
+cubemx same as 4
+pa0 - GPIO_Input
+pd15 to 12: GPIO_output
+
+connections:
+uln:
+3 4 6 8 10
+1 2 5 7 9
+(ask mam for the order notch starting)
+
+uln-stm 
+1-13
+2-15
+3-12
+4-14
+9-vcc
+10-gnd
+
+(no other conenctions. rest are internal)
+
+#include "main.h"
+void Step_Sequence1(void);
+void Step_Sequence2(void);
+void Step_Sequence3(void);
+void Step_Sequence4(void);
+
+GPIO_PinState direction;
+
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+int main(void)
+{
+	HAL_Init();
+	MX_GPIO_Init();
+	SystemClock_Config();
+	while(1)
+	{
+		direction=HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0);
+		if(direction==GPIO_PIN_SET)
+		{
+			Step_Sequence1();
+			HAL_Delay(50);
+			Step_Sequence2();
+			HAL_Delay(50);
+			Step_Sequence3();
+			HAL_Delay(50);
+			Step_Sequence4();
+			HAL_Delay(50);
+		}
+		else
+		{
+	
+			Step_Sequence4();
+			HAL_Delay(50);
+			Step_Sequence3();
+			HAL_Delay(50);
+			Step_Sequence2();
+			HAL_Delay(50);
+			Step_Sequence1();
+			HAL_Delay(50);
+
+		}
+	}
+void Step_Sequence1(void) //pd12
+{
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,GPIO_PIN_RESET);
+}
+void Step_Sequence2(void) //pd15
+{
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,GPIO_PIN_SET);
+}
+void Step_Sequence3(void) //pd13
+{
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,GPIO_PIN_RESET);
+}
+void Step_Sequence4(void) //pd14
+{
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,GPIO_PIN_RESET);
+}
+
+
+//5a (if interrupts)
+cubemx: pa0- GPIO_EXTI0 (not GPIO_Input)
+categories-> NVIC -> check box on EXTI line0 interrupt
+
+
+include "main.h"
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+void Step_Sequence1(void);
+void Step_Sequence2(void);
+void Step_Sequence3(void);
+void Step_Sequence4(void);
+uint8_t flag=0;
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	UNUSED(GPIO_Pin);
+	flag=~flag;
+}
+int main(void)
+{
+	HAL_Init();
+	MX_GPIO_Init();
+	SystemClock_Config();
+	while(1)
+	{
+		if(flag)
+		{
+			Step_Sequence1();
+			HAL_Delay(50);
+			Step_Sequence2();
+			HAL_Delay(50);
+			Step_Sequence3();
+			HAL_Delay(50);
+			Step_Sequence4();
+			HAL_Delay(50);
+		}
+		else
+		{
+	
+			Step_Sequence4();
+			HAL_Delay(50);
+			Step_Sequence3();
+			HAL_Delay(50);
+			Step_Sequence2();
+			HAL_Delay(50);
+			Step_Sequence1();
+			HAL_Delay(50);
+
+		}
+	}
+//same step_seq definitions as above
+
+
+//5b- if rotation angle given 180
+
+include "main.h"
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+void Step_Sequence1(void);
+void Step_Sequence2(void);
+void Step_Sequence3(void);
+void Step_Sequence4(void);
+int main(void)
+{
+	HAL_Init();
+	MX_GPIO_Init();
+	SystemClock_Config();
+	int i=25;
+	while(i>0)
+	{
+		Step_Sequence1();
+		HAL_Delay(50);
+		Step_Sequence2();
+		HAL_Delay(50);
+		Step_Sequence3();
+		HAL_Delay(50);
+		Step_Sequence4();
+		HAL_Delay(50);
+		i--;
+	}
+	while(1);
+}
+//same step_seq definitions as 4a
+
+
+//6a - adc
+cubemx: 
+rcc->crystal and sys->serial wire
+clk congig- APB2- 60 ashte (rest will change on own)
+analog-> adc1-> IN1 checkbox. (PA1)
+
+connections:
+pot: ask her which is gnd- that to gnd of stm
+middle of pot - PA1
+left (other which is not gnd) - 3.3v of stm
+
+include "main.h"
+
+ADC_HandleTypeDef hadc1;
+
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_ADC1_Init(void);
+
+uint32_t analogValue;
+
+int main(void)
+{
+	HAL_Init();
+	MX_ADC1_Init();
+	MX_GPIO_Init();
+	SystemClock_Config();
+	while(1)
+	{
+		HAL_ADC_Start(&hadc1);
+		if(HAL_ADC_PollForConversion(&hadc1,1)==HAL_OK)
+		{
+			analogValue=HAL_ADC_GetValue(&hadc1);
+		}
+		else
+		{
+			analogValue=0;
+		}
+	}
+}
+
+//6b - pwm wave
+along w prev config:
+PD9- GPIO_Input
+
+connections:
+pd9-scope(check color check the sheet)
+gnd-that same color with striped line in between
+gnd-gnd
+pa1-wavegen
+
+wavegen app:
+wavegen- dc input
+scope- obs. output pwm wave
+
+include "main.h"
+
+ADC_HandleTypeDef hadc1;
+
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_ADC1_Init(void);
+
+uint32_t analogValue;
+
+int main(void)
+{
+	HAL_Init();
+	MX_ADC1_Init();
+	MX_GPIO_Init();
+	SystemClock_Config();
+	while(1)
+	{
+		HAL_ADC_Start(&hadc1);
+		if(HAL_ADC_PollForConversion(&hadc1,1)==HAL_OK)
+		{
+			analogValue=HAL_ADC_GetValue(&hadc1);
+		}
+		else
+		{
+			analogValue=0;
+		}
+		
+		HAL_GPIO_WritePin(GPIOD,GPIO_PIN_9,GPIO_PIN_SET);
+		for(int i=0;i<analogValue;i++)
+		for(int i=0;i<analogValue;i++)
+		
+		analogValue=(~analogValue)&0x0FFF;
+		
+		HAL_GPIO_WritePin(GPIOD,GPIO_PIN_9,GPIO_PIN_RESET);
+		for(int i=0;i<analogValue;i++)
+		for(int i=0;i<analogValue;i++)
+	}
+}
+
+
+//7a
+cubemx: (same as adc) + dac
+rcc->crystal and sys->serial wire
+clk congig- APB2- 60 ashte (rest will change on own)
+analog-> adc1-> IN1 checkbox. (PA1)
+
+analog-> dac-> OUT1 checkbox. trigger-> software trigger (PA4)
+
+connnections:
+pa1-wavegen (check color)
+gnd-same color of wavegen with striped line in middle
+gnd-gnd (black)
+pa4-scope
+
+wavegen app:
+wavegen- sine input (change freq)
+scope- obs. output wave for diff freq
+
+include "main.h"
+
+ADC_HandleTypeDef hadc1
+DAC_HandleTypeDef hdac
+
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_ADC1_Init(void);
+static void MX_DAC_Init(void);
+
+uint16_t analogValue;
+
+int main(void)
+{
+	HAL_Init();
+	MX_GPIO_Init();
+	MX_ADC1_Init();
+	MX_DAC_Init();
+	while(1)
+	{
+		HAL_ADC_Start(&hadc1);
+		if(HAL_ADC_PollForConversion(&hadc,1)==HAL_OK)
+		{
+			analogValue=HAL_ADC_GetValue(&hadc);
+		}
+		else
+		{
+			analogValue=0;
+		}
+		
+		HAL_DAC_SetValue(&hdac,DAC_CHANNEL_1,DAC_ALIGN_12B_R,analogValue);
+		HAL_DAC_Start(&hdac,DAC_CHANNEL_1);
+	}
+}
+
+//7b- if interrupt 
+cubemx: 
+rcc->crystal and sys->serial wire
+clk config- both clk hsi. 
+analog-> adc1-> IN1 checkbox. (PA1)
+NVIC-> CH1-> ADC1,ADC2,ADC3 lobal interrupt checkbox.
+timers->timer2->trigger event selection:update event.
+
+pd15- GPIO_output
+
+include "main.h"
+
+ADC_HandleTypeDef hadc1;
+TIM_HandleTypeDef htim2;
+
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_ADC1_Init(void);
+static void MX_TIM2_Init(void);
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+	analogValue=HAL_ADC_GetValue(&hadc1);
+	HAL_GPIO_TogglePin(GPIOD,GPIO_PIN_15);
+}
+
+uint16_t analogValue;
+
+int main(void)
+{
+	HAL_Init();
+	SystemClock_Config();
+	MX_GPIO_Init();
+	MX_ADC1_Init();
+	MX_TIM2_Init();
+	HAL_TIM2_Base_Start(&htim2);
+	HAL_ADC_Start_IT(&hadc1);
+}
+
+while(1);
+
+
+//8
+cubemx: (same as adc) + usart
+rcc->crystal and sys->serial wire
+clk congig- APB2- 60 ashte (rest will change on own)
+analog-> adc1-> IN1 checkbox. (PA1)
+connectivity->usart2-> asynchronous-> baudrate:9600 (pa2)
+
+connections:
+pa1-wavegen
+gnd-wavegen color w striped in middle
+gnd-gnd
+pa2-DI0
+
+wavegen: 
+protocol->uart
+TX: none
+RX: DIO 0
+receive
+
+include "main.h"
+include <stdio.h>
+include <string.h>
+
+ADC_HandleTypeDef hadc1;
+UART_HandleTypeDef huart2;
+
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_ADC1_Init(void);
+static void MX_USART2_UART_Init(void);
+
+uint8_t analogValue;
+
+int main(void)
+{
+	HAL_Init();
+	MX_GPIO_Init();
+	MX_ADC1_Init();
+	MX_USART2_UART_Init();
+	
+	const char Array[]="\n Temperature";
+	char tempValue[20],i=0;
+	
+	while(1)
+	{
+		HAL_ADC_Start(&hadc1);
+		if(HAL_ADC_PollForConversion(&hadc,1)==HAL_OK)
+		{
+			analogValue=HAL_ADC_GetValue(&hadc);
+		}
+		else
+		{
+			analogValue=0;
+		}
+		
+		HAL_UART_Transmit(&huart2,(uint8_t *)Array,strlen(Array),10);
+		while(analogValue!=0)
+		{
+			tempValue[i]=analogValue%10+'0';
+			analogValue=analogValue/10;
+			i++;
+		}
+		
+		tempValue[i]='\0';
+		HAL_UART_Transmit(&huart2,(uint8_t*)tempValue,strlen(tempValue),10);
+		HAL_Delay(1000);
+	}
+}
+
+//9 spi
+cubemx: 
+rcc->crystal and sys->serial wire
+
+pd15,pd13,pe3- GPIO_output
+clk - default
+conectivity->spi1->mode:full duplex master
+prescaler baudrate: 16
+pe0- GPIO_EXTI0 (for interrupt)
+
+for accelo to work:
+take two folders accelo.h and accelofile.c from desktop (or ask mam)
+-copy paste in MDK folder of the project.
+-in application proj (where main is der), right click->add existing files to grp-> add both files(or if one shows up add that)
+-in proj top one, right click-> options for target-> c/c++ tab->include paths->add mdk file path
+
+
+#include "main.h"
+#include "accelo.h"
+
+SPI1_HandleTypeDef hspi1;
+
+void SystemClock_Config(void);
+static void MX_SPI1_Init(void);
+static void MX_GPIO_Init(void);
+
+LIS3DSH_DataScaled myData;
+
+int main(void)
+{
+	HAL_Init();
+	SystemClock_Config();
+	MX_SPI1_Init();
+	MX_GPIO_Init();
+	
+	LIS3DSH_InitTypeDef myaccelo.config;
+	
+	myaccelo_config.dataRate=LIS3DSH_DATARATE_12_5;
+	myaccelo_config.fullScale=LIS3DSH_FULLSCALE_4;
+	myaccelo_config.antiAliasingBW=LIS3DSH_FILTER_BW_50;
+	myaccelo_config.enableAxes=LIS3DSH_XYZ_ENABLE;
+	myaccelo_config.interuptEnable=false;
+	
+	LIS3DSH_Init(&hspi1,&myaccelo_config);
+	
+	while(1)
+	{
+		if(LIS3DSH_PollDRDY(1000)=true)
+		{
+			myData=LIS3DSH_GetDataScaled();
+			HAL_GPIO_TogglePin(GPIOD,GPIO_PIN_15);
+		}
+	}
+}
+
+
+//9b- if interrupt
+
+#include "main.h"
+#include "accelo.h"
+
+SPI_HandleTypeDef hspi1;
+
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_SPI1_Init(void);
+
+LIS3DSH_DataScaled myData;
+
+uint8_t flag=0;
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO Pin)
+{
+	UNUSED(GPIO Pin);
+	flag=1;
+	HAL_GPIO_TogglePin(GPIOD,GPIO_PIN_13);
+}
+
+int main(void)
+{
+	HAL_Init();
+	SystemClock_Config();
+	MX_GPIO_Init();
+	MX_SPI1_Init();
+	
+	LIS3DSH_InitTypeDef myaccelo_config;
+	
+	myaccelo_config.dataRate=LIS3DSH_DATARATE_12_5;
+	myaccelo_config.fullScale=LIS3DSH_FULLSCALE_4;
+	myaccelo_config.antiAliasingBW=LIS3DSH_FILTER_BW_50;
+	myaccelo_config.enableAxes=LIS3DSH_XYZ_ENABLE;
+	myaccelo_config.interuptEnable=true;
+	
+	LIS3DSH_Init(&hspi1,&myaccelo_config);
+	while(1)
+	{
+		if(flag=1)
+		{
+			flag=0;
+			myData=LIS3DSH_GetDataScaled();
+			HAL_GPIO_TogglePin(GPIOD,GPIO_PIN_13);
+		}
+	}
+}
+
+
+//10
+project-> new proj
+-select stm32f407vgtx
+soft component-> CMSIS: CORE
+Device: Startup
+to get startup, down sm 2 packs u sld select. lowk dk which
+as far as i rem, 1 cmsis- make it fixed. uncheck first and checkbox last(3rd)
+1 last + option- do the same. select lastest ver.
+
+#include "stm32f4xx.h"
+  
+void delayMs(int n); 
+
+int main(void)  
+{ 
+RCC->AHB1ENR |=  9;                 
+RCC->APB2ENR |= (1<<14); 
+
+GPIOD->MODER |=  0x11000000;
+GPIOA->MODER &= ~(0x00000003);
+
+SYSCFG->EXTICR[0]&=~(0xF<<0);
+           
+EXTI->IMR |= (1<<0);         
+EXTI->RTSR |= (1<<0);       
+EXTI->FTSR &= ~(1<<0);    
+NVIC->ISER[0] |= (1<<6);  
+  
+while(1)  
+{ 
+GPIOD->BSRRL = 0x1000;   
+delayMs(300); 
+GPIOD->BSRRH = 0x1000;    
+delayMs(300); 
+} 
+} 
+
+void EXTI0_IRQHandler(void) 
+{ 
+int i; 
+for(i=0;i<3;i++) 
+{ 
+GPIOD->BSRRL = 0x4000;   
+delayMs(300); 
+GPIOD->BSRRH = 0x4000;    
+delayMs(300); 
+} 
+EXTI->PR |=(1<<0); 
+} 
+
+void delayMs(int n)  
+{ 
+int i; 
+for (; n > 0; n--) 
+	for (i = 0; i < 3195; i++) ; 
+} 
